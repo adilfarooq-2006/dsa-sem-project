@@ -43,7 +43,7 @@ private:
     // 🔥 HASHMAP instead of map
     unordered_map<int, City> cityDatabase;
 
-    // Graph: still okay as unordered_map
+    // Graph: still okay as unordered_map (Used by ADIL)
     unordered_map<int, vector<pair<int,int>>> roadNetwork;
 
     priority_queue<City, vector<City>, ComparePriority> emergencyQueue;
