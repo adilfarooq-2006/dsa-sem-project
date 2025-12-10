@@ -6,6 +6,6 @@ set(CMAKE_CXX_STANDARD 14)
 include_directories(.)
 
 add_executable(dsa_sem_project
-        Flood_System.h
         main.cpp
-        Ahmed_Data.cpp)
+        Ahmed_Data.cpp
+        FloodSystem.h)

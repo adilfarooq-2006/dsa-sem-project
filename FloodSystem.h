@@ -4,11 +4,11 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <queue>   // For Priority Queue & BFS
-#include <stack>   // For Supplies
-#include <map>     // For HashMap
-#include <climits> // For INT_MAX (Infinity)
-#include <cmath>   // For simple math
+#include <queue>
+#include <stack>
+#include <unordered_map>  // 🔥 REPLACED map with HASHMAP
+#include <climits>
+#include <cmath>
 
 using namespace std;
 
@@ -18,20 +18,18 @@ using namespace std;
 struct City {
     int id;
     string name;
-    int injuredCount = 0;       // Casualties (Set by Randomizer)
-    bool isFlooded = false;     // True if flood reached here
-    bool hasReceivedAid = false; // True if truck arrived
-    int priorityScore = 0;      // Logic: injuredCount * severity
-    
-    // For Dijkstra (Adil)
-    int minDistance = INT_MAX;  // "Infinity" initially
-    int previousCityID = -1;    // To track the path back
+    int injuredCount = 0;
+    bool isFlooded = false;
+    bool hasReceivedAid = false;
+    int priorityScore = 0;
+
+    int minDistance = INT_MAX;
+    int previousCityID = -1;
 };
 
-// Comparator for Priority Queue (Max-Heap based on Injured Count)
+// Comparator for Priority Queue
 struct ComparePriority {
     bool operator()(City const& p1, City const& p2) {
-        // Returns true if p1 is LESS critical than p2
         return p1.injuredCount < p2.injuredCount;
     }
 };
@@ -41,54 +39,43 @@ struct ComparePriority {
 // ==========================================
 class FloodReliefSystem {
 private:
-    // --- DATA STRUCTURES ---
-    
-    // [Ahmed] HashMap: Fast lookup of City Details by ID
-    map<int, City> cityDatabase;
 
-    // [Adil] Graph: Adjacency List for Roads (pairs: neighborID, distance)
-    map<int, vector<pair<int, int>>> roadNetwork;
+    // 🔥 HASHMAP instead of map
+    unordered_map<int, City> cityDatabase;
 
-    // [Ehsaan] Priority Queue: Critical Areas Management
+    // Graph: still okay as unordered_map
+    unordered_map<int, vector<pair<int,int>>> roadNetwork;
+
     priority_queue<City, vector<City>, ComparePriority> emergencyQueue;
 
-    // [Ehsaan] Stacks: Inventory Management
     stack<string> stockIslamabad;
     stack<string> stockLahore;
 
 public:
-    // Constructor
     FloodReliefSystem() {
-        loadCities(); // Ahmed's setup
-        loadRoads();  // Adil's setup
-        loadStock();  // Ehsaan's setup
+        loadCities();
+        loadRoads();
+        loadStock();
     }
 
-    // ==========================================
-    // PART 1: AHMED (Data & State)
-    // ==========================================
-    void loadCities();                 // Populate cityDatabase
-    void updateCityStatus(int id);     // Mark city as 'Safe' or 'Helped'
-    void evaporateFlood();             // Simulate flood receding (reduce casualties slightly)
-    City getCity(int id);              // Helper to get city details
+    // --- AHMED ---
+    void loadCities();
+    void updateCityStatus(int id);
+    void evaporateFlood();
+    City getCity(int id);
 
-    // ==========================================
-    // PART 2: EHSAAN (Events & Inventory)
-    // ==========================================
-    void loadStock();                  // Push items to stacks
-    void simulateFloodSpread(int startCityID); // BFS Algorithm (The Flood)
-    bool hasSupplies(string warehouse); // Check if stack is empty
-    void dispatchSupply(string warehouse); // Pop from stack
+    // --- EHSAAN ---
+    void loadStock();
+    void simulateFloodSpread(int startCityID);
+    bool hasSupplies(string warehouse);
+    void dispatchSupply(string warehouse);
 
-    // ==========================================
-    // PART 3: ADIL (Graph & Navigation)
-    // ==========================================
-    void loadRoads();                  // Build the Graph connections
-    void runDijkstra(int startID);     // The Algorithm logic
-    void visualizePath(int startID, int endID); // Print: "ISL -> Jhelum -> Gujrat"
-    
-    // The "Brain" that decides ISL vs LHR
-    void processNextEmergency();       
+    // --- ADIL ---
+    void loadRoads();
+    void runDijkstra(int startID);
+    void visualizePath(int startID, int endID);
+
+    void processNextEmergency();
 };
 
 #endif

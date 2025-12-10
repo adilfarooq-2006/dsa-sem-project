@@ -1,13 +1,13 @@
-#include "Flood_System.h" // Matches your new header name
+#include "FloodSystem.h"
 #include <iostream>
-#include <climits> // For INT_MAX
+#include <climits>
 
 using namespace std;
 
+// =====================================================
+// AHMED — LOAD CITIES INTO HASHMAP (unordered_map)
+// =====================================================
 void FloodReliefSystem::loadCities() {
-    // Syntax for Maps: cityDatabase[ID] = { ...data... };
-    // We explicitly set INT_MAX and -1 for the last two fields (Dijkstra)
-    
     cityDatabase[0]  = {0,  "Lahore",         10, true,  false, 50, INT_MAX, -1};
     cityDatabase[1]  = {1,  "Faisalabad",     5,  false, false, 20, INT_MAX, -1};
     cityDatabase[2]  = {2,  "Rawalpindi",     0,  false, false, 0,  INT_MAX, -1};
@@ -37,31 +37,52 @@ void FloodReliefSystem::loadCities() {
     cout << "[Ahmed] Data: 25 Cities Loaded into HashMap." << endl;
 }
 
+// =====================================================
+// UPDATE CITY STATUS
+// =====================================================
 void FloodReliefSystem::updateCityStatus(int id) {
-    // .find() works exactly the same for HashMaps
-    if (cityDatabase.find(id) != cityDatabase.end()) {
-        cityDatabase[id].hasReceivedAid = true;
-        cityDatabase[id].isFlooded = false;
-        cityDatabase[id].injuredCount = 0;
-        cityDatabase[id].priorityScore = 0;
-        cout << "[Update] " << cityDatabase[id].name << " is now SAFE." << endl;
-    } else {
-        cout << "[Error] City ID not found!" << endl;
+    auto it = cityDatabase.find(id);
+
+    if (it != cityDatabase.end()) {
+        City &city = it->second;
+
+        city.hasReceivedAid = true;
+        city.isFlooded = false;
+        city.injuredCount = 0;
+        city.priorityScore = 0;
+
+        cout << "[Update] " << city.name << " is now SAFE." << endl;
+    }
+    else {
+        cout << "[Error] City ID " << id << " not found in HashMap!" << endl;
     }
 }
 
+// =====================================================
+// EVAPORATION OF FLOOD EFFECT
+// =====================================================
 void FloodReliefSystem::evaporateFlood() {
     cout << "[Nature] Flood waters are receding..." << endl;
 
-    // NOTE: In a HashMap, this loop will visit cities in RANDOM order, not ID 0,1,2...
-    // This is the trade-off for speed.
-    for (auto& entry : cityDatabase) {
-        if (entry.second.isFlooded && entry.second.injuredCount > 0) {
-            entry.second.injuredCount--;
+    // HashMap iterates in random bucket order
+    for (auto &entry : cityDatabase) {
+        City &city = entry.second;
+
+        if (city.isFlooded && city.injuredCount > 0) {
+            city.injuredCount--;
         }
     }
 }
 
+// =====================================================
+// FETCH A CITY (SAFE HASHMAP ACCESS)
+// =====================================================
 City FloodReliefSystem::getCity(int id) {
-    return cityDatabase[id];
+    // If not found → return an empty city instead of crashing
+    if (cityDatabase.find(id) != cityDatabase.end()) {
+        return cityDatabase[id];
+    }
+
+    cout << "[Warning] Attempted to get invalid city ID: " << id << endl;
+    return City();
 }
