@@ -1,7 +1,10 @@
+#include "FloodSystem.h"
+#include <iostream>
 
-// #include <iostream>
-// using namespace std;
+using namespace std;
 
-// int main() {
-//     cout << "Hello World" << endl;
-// }
+int main() {
+    cout << "=== SMART FLOOD RELIEF SYSTEM STARTING ===" << endl;
+
+    FloodReliefSystem sys;
+}

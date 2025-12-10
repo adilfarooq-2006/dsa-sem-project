@@ -174,4 +174,26 @@ void FloodReliefSystem::loadRoads() {
     roadNetwork[24].push_back({8, 45});  
     roadNetwork[8].push_back({24, 45});
 
+
+    // DEBUG: PRINT THE FULL MAP
+    // cout << "\n=== [Adil] CURRENT MAP CONNECTIONS ===\n";
+    
+    // // Use 'entry' instead of [cityID, neighbors]
+    // for (auto const& entry : roadNetwork) {
+    //     int cityID = entry.first;                  // Get the Key (ID)
+    //     auto neighbors = entry.second;             // Get the Value (List of roads)
+        
+    //     string startCity = cityDatabase[cityID].name; 
+        
+    //     cout << "City: " << startCity << " (ID: " << cityID << ") connects to:" << endl;
+        
+    //     for (auto const& edge : neighbors) {
+    //         int neighborID = edge.first;
+    //         int distance = edge.second;
+    //         string neighborName = cityDatabase[neighborID].name;
+            
+    //         cout << "    --> " << neighborName << " (" << distance << " km)" << endl;
+    //     }
+    //     cout << "-----------------------------------" << endl;
+    // }
 }
