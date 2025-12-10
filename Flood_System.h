@@ -4,14 +4,13 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <queue>   // For Priority Queue & BFS
-#include <stack>   // For Supplies
-#include <map>     // <--- REQUIRED for your Ahmed_Data.cpp
-#include <climits> // For INT_MAX
+#include <queue>
+#include <stack>
+#include <unordered_map> // <--- Correct Library for Hash Map
+#include <climits>
 
-using namespace std; // <--- This fixes the "string does not name a type" errors
+using namespace std;
 
-// 1. Define the City Structure
 struct City {
     int id;
     string name;
@@ -23,35 +22,25 @@ struct City {
     int previousCityID;
 };
 
-// Comparator for Priority Queue (Needed for Ehsaan)
 struct ComparePriority {
     bool operator()(City const& p1, City const& p2) {
         return p1.injuredCount < p2.injuredCount;
     }
 };
 
-// 2. Define the Class
 class FloodReliefSystem {
 public:
-    // IMPORTANT: Changed from Array [25] to Map for your code to work
-    map<int, City> cityDatabase;
+    // FIX 1: Change 'map' to 'unordered_map'
+    unordered_map<int, City> cityDatabase;
 
-    // Graph storage (Adil's part)
-    // Uses a Map now for consistency: RoadNetwork[CityID] -> List of Neighbors
-    map<int, vector<pair<int, int>>> roadNetwork;
+    // FIX 2: Change 'map' to 'unordered_map' here too
+    unordered_map<int, vector<pair<int, int>>> roadNetwork;
 
-    // Warehouses (Ehsaan's part)
-    // Queue for emergency alerts
     priority_queue<City, vector<City>, ComparePriority> emergencyQueue;
-
-    // Stacks for stock
     stack<string> stockIslamabad;
     stack<string> stockLahore;
 
-    // --- FUNCTION PROTOTYPES ---
-
-    // Constructor
-    FloodReliefSystem();
+    FloodReliefSystem(); // Constructor
 
     // Ahmed's Functions
     void loadCities();

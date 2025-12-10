@@ -38,7 +38,7 @@ void FloodReliefSystem::loadCities() {
 }
 
 void FloodReliefSystem::updateCityStatus(int id) {
-    // Check if city exists in map
+    // .find() works exactly the same for HashMaps
     if (cityDatabase.find(id) != cityDatabase.end()) {
         cityDatabase[id].hasReceivedAid = true;
         cityDatabase[id].isFlooded = false;
@@ -52,11 +52,12 @@ void FloodReliefSystem::updateCityStatus(int id) {
 
 void FloodReliefSystem::evaporateFlood() {
     cout << "[Nature] Flood waters are receding..." << endl;
-    // Iterator loop for Map
+
+    // NOTE: In a HashMap, this loop will visit cities in RANDOM order, not ID 0,1,2...
+    // This is the trade-off for speed.
     for (auto& entry : cityDatabase) {
-        // entry.second refers to the City object
         if (entry.second.isFlooded && entry.second.injuredCount > 0) {
-            entry.second.injuredCount--; // Reduce casualties naturally
+            entry.second.injuredCount--;
         }
     }
 }
