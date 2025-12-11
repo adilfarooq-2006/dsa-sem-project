@@ -214,7 +214,7 @@ void FloodReliefSystem::loadCities() {
     cityDatabase[203] = {203, "Yazman", 3, false, true, 27, INT_MAX, -1};
 
 
-    cout << "[Ahmed] Data: 25 Cities Loaded into HashMap." << endl;
+    cout << "[Ahmed] Data: 203 Cities Loaded into HashMap." << endl;
 }
 
 // =====================================================
