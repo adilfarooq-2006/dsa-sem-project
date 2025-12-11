@@ -1,9 +1,21 @@
 #include "FloodSystem.h"
+#include "City.h"
+
 #include <iostream>
+#include <string>
 #include <vector>
+#include <stack>
+#include <queue>
 #include <map>
 
+
 using namespace std;
+
+//for dijkstra
+struct Edge {
+    string destination;
+    int weight; //distance in km
+};
 
 // Helper to make adding roads easier/cleaner
 void addRoad(unordered_map<int, vector<pair<int, int>>>& network, int u, int v, int dist) {
@@ -124,4 +136,70 @@ void FloodReliefSystem::loadRoads() {
         }
         cout << "-----------------------" << endl;
     }
+}
+
+void FloodReliefSystem::runDijkstra(int startID) {
+    cout << "\n[Dijkstra] Starting from: " << cityDatabase[startID].name << " (ID: " << startID << ")" << endl;
+    
+    // Reset all cities
+    for (auto& pair : cityDatabase) {
+        pair.second.minDistance = INT_MAX;
+        pair.second.previousCityID = -1;
+    }
+
+    // Priority Queue: {distance, cityID}
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    
+    cityDatabase[startID].minDistance = 0;
+    pq.push({0, startID});
+
+    int citiesVisited = 0;
+
+    while (!pq.empty())
+    {
+        int currentDist = pq.top().first;
+        int currentID = pq.top().second;
+        pq.pop();
+
+        // Skip if we found a better path already
+        if (currentDist > cityDatabase[currentID].minDistance) continue;
+
+        citiesVisited++;
+        
+        // VISUALIZATION: Show traversal
+        cout << "> Visiting: " << cityDatabase[currentID].name 
+             << " (Dist: " << currentDist << " km";
+        //flooded display check
+        if (cityDatabase[currentID].isFlooded) {
+            cout << " [FLOODED]";
+        }
+        cout << ")" << endl;
+
+        // Explore neighbors
+        for (auto& edge : roadNetwork[currentID]) {
+            int neighborID = edge.first;
+            int roadDist = edge.second;
+
+            // FLOOD PENALTY: If neighbor is flooded, multiply distance by 3
+            int penalty = cityDatabase[neighborID].isFlooded ? 3 : 1;
+            int effectiveDist = roadDist * penalty;
+
+            int newDist = currentDist + effectiveDist;
+
+            // Relaxation step
+            if (newDist < cityDatabase[neighborID].minDistance) {
+                cityDatabase[neighborID].minDistance = newDist;
+                cityDatabase[neighborID].previousCityID = currentID;
+                pq.push({newDist, neighborID});
+
+                // Show update
+                cout << "   -> Update: " << cityDatabase[neighborID].name 
+                     << " (New Dist: " << newDist << " km";
+                if (penalty > 1) cout << " [FLOOD PENALTY x3]";
+                cout << ")" << endl;
+            }
+        }
+    }
+
+    cout << "[Dijkstra] Complete. Nodes visited: " << citiesVisited << endl;
 }
