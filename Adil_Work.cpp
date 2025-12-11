@@ -138,68 +138,114 @@ void FloodReliefSystem::loadRoads() {
     }
 }
 
-void FloodReliefSystem::runDijkstra(int startID) {
-    cout << "\n[Dijkstra] Starting from: " << cityDatabase[startID].name << " (ID: " << startID << ")" << endl;
+
+//helper function for Dijkstra Algo
+const int FLOOD_AVOIDANCE_PENALTY = 10000; // High cost to force finding a different route
+const int HUB_ISLAMABAD_ID = 1;
+const int HUB_LAHORE_ID = 2;
+
+int calculateTravelCost(int startID, int targetCityID, unordered_map<int, vector<pair<int, int>>>& globalRoadNetwork, unordered_map<int, City>& globalCityData) {
     
+    // Min-Heap to store <accumulatedDistance, cityID>
+    // Ordered by smallest distance first
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> travelQueue;
+    
+    // Local map to track distances during this calculation only
+    unordered_map<int, int> tempDistances;
+
+    // Initialize all distances to Infinity
+    for (auto& city : globalCityData) {
+        int id = city.first; 
+        tempDistances[id] = INT_MAX;
+    }
+
+    // Set start point
+    tempDistances[startID] = 0;
+    travelQueue.push({0, startID});
+
+    while (!travelQueue.empty()) {
+        int currentDist = travelQueue.top().first;
+        int currentCityID = travelQueue.top().second;
+        travelQueue.pop();
+
+        //If we found a shorter way to this city before, skip this outdated entry
+        if (currentDist > tempDistances[currentCityID]) continue;
+
+        //Stop if we reached the target
+        if (currentCityID == targetCityID) return currentDist;
+
+        // Check all roads connected to the current city
+        for (auto& roadEdge : globalRoadNetwork[currentCityID]) {
+            int neighborCityID = roadEdge.first;
+            int roadLength = roadEdge.second;
+
+            // CHECK FOR FLOODS
+            // If the neighbor city is flooded, pretend the road is 10,000km longer.
+            // This forces the algorithm to look for a dry route around it.
+            if (globalCityData[neighborCityID].isFlooded) {
+                roadLength += FLOOD_AVOIDANCE_PENALTY;
+            }
+
+            // Relaxation Step: Is this new path shorter than the old known path?
+            if (tempDistances[currentCityID] != INT_MAX && 
+                tempDistances[currentCityID] + roadLength < tempDistances[neighborCityID]) {
+                
+                tempDistances[neighborCityID] = tempDistances[currentCityID] + roadLength;
+                travelQueue.push({tempDistances[neighborCityID], neighborCityID});
+            }
+        }
+    }
+    
+    // If loop finishes and we never reached target
+    return INT_MAX;
+}
+
+void FloodReliefSystem::runDijkstra(int startID) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> visitQueue;
+
     // Reset all cities
     for (auto& pair : cityDatabase) {
         pair.second.minDistance = INT_MAX;
         pair.second.previousCityID = -1;
     }
 
-    // Priority Queue: {distance, cityID}
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    if (cityDatabase.find(startID) == cityDatabase.end()) { // Safety check
+        return; 
+    }
     
+    //Initialize Start Node
     cityDatabase[startID].minDistance = 0;
-    pq.push({0, startID});
+    visitQueue.push({0, startID});
 
-    int citiesVisited = 0;
+    //Processing Loop
+    while (!visitQueue.empty()) {
+        int currentCityID = visitQueue.top().second;
+        int distToCurrent = visitQueue.top().first;
+        visitQueue.pop();
 
-    while (!pq.empty())
-    {
-        int currentDist = pq.top().first;
-        int currentID = pq.top().second;
-        pq.pop();
-
-        // Skip if we found a better path already
-        if (currentDist > cityDatabase[currentID].minDistance) continue;
-
-        citiesVisited++;
-        
-        // VISUALIZATION: Show traversal
-        cout << "> Visiting: " << cityDatabase[currentID].name 
-             << " (Dist: " << currentDist << " km";
-        //flooded display check
-        if (cityDatabase[currentID].isFlooded) {
-            cout << " [FLOODED]";
+        if (distToCurrent > cityDatabase[currentCityID].minDistance) {
+            continue;
         }
-        cout << ")" << endl;
 
-        // Explore neighbors
-        for (auto& edge : roadNetwork[currentID]) {
-            int neighborID = edge.first;
-            int roadDist = edge.second;
+        // Explore Neighbors
+        for (auto& road : roadNetwork[currentCityID]) {
+            int neighborID = road.first;
+            int roadDist = road.second;
 
-            // FLOOD PENALTY: If neighbor is flooded, multiply distance by 3
-            int penalty = cityDatabase[neighborID].isFlooded ? 3 : 1;
-            int effectiveDist = roadDist * penalty;
+            // Apply Flood Penalty
+            if (cityDatabase[neighborID].isFlooded) {
+                roadDist += FLOOD_AVOIDANCE_PENALTY;
+            }
 
-            int newDist = currentDist + effectiveDist;
-
-            // Relaxation step
-            if (newDist < cityDatabase[neighborID].minDistance) {
-                cityDatabase[neighborID].minDistance = newDist;
-                cityDatabase[neighborID].previousCityID = currentID;
-                pq.push({newDist, neighborID});
-
-                // Show update
-                cout << "   -> Update: " << cityDatabase[neighborID].name 
-                     << " (New Dist: " << newDist << " km";
-                if (penalty > 1) cout << " [FLOOD PENALTY x3]";
-                cout << ")" << endl;
+            // Update if a better path is found
+            if (cityDatabase[currentCityID].minDistance != INT_MAX && 
+                cityDatabase[currentCityID].minDistance + roadDist < cityDatabase[neighborID].minDistance) {
+                
+                cityDatabase[neighborID].minDistance = cityDatabase[currentCityID].minDistance + roadDist;
+                cityDatabase[neighborID].previousCityID = currentCityID; // Track where we came from
+                
+                visitQueue.push({cityDatabase[neighborID].minDistance, neighborID});
             }
         }
     }
-
-    cout << "[Dijkstra] Complete. Nodes visited: " << citiesVisited << endl;
 }
