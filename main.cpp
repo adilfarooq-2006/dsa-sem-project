@@ -22,7 +22,7 @@ int main() {
 
     FloodReliefSystem sys; // The Master Object
 
-    cout << " - City Database: Loaded (25 Cities)\n";
+    cout << " - City Database: Loaded (203 Cities)\n";
     cout << " - Road Network:  Connected (Graph Built)\n";
     cout << " - Logistics:     Warehouses Stocked (Stacks Ready)\n\n";
 
@@ -46,7 +46,7 @@ int main() {
         if (cin.fail()) {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << ">>> Invalid input. Please enter a number.\n";
+            cout << ">>> Invalid input. Please enter a given number from menu.\n";
             continue;
         }
 
