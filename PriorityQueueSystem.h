@@ -9,8 +9,8 @@ using namespace std;
 
 class PriorityQueueSystem {
 private:
-    // REPLACED VECTOR WITH RAW ARRAY
-    City heapArray[100]; // Safe capacity for our 25-city map
+    // UPDATE: Increased capacity from 100 to 300 to handle 205 cities safely
+    City heapArray[300];
     int currentSize;     // Tracks how many items are currently in the heap
 
     // Restore heap property moving UP
@@ -54,8 +54,9 @@ public:
 
     // Enqueue: Add a new area
     void enqueue(City c) {
-        if (currentSize >= 100) {
-            cout << "[Error] Priority Queue Overflow!" << endl;
+        // UPDATE: Check against new limit (300)
+        if (currentSize >= 300) {
+            cout << "[Error] Priority Queue Overflow! Max capacity (300) reached." << endl;
             return;
         }
 
