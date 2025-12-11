@@ -4,77 +4,60 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <queue>
-#include <stack>
-#include <unordered_map>  // 🔥 REPLACED map with HASHMAP
-#include <climits>
-#include <cmath>
+#include <unordered_map> // <--- CHANGED: Uses Hash Table logic
+#include <climits>       // For INT_MAX
+
+// --- CUSTOM MODULES ---
+#include "City.h"
+#include "InventorySystem.h"     // Ehsaan's Custom Stack
+#include "PriorityQueueSystem.h" // Ehsaan's Custom Heap
 
 using namespace std;
 
-// ==========================================
-// SHARED DATA STRUCTURE: THE CITY
-// ==========================================
-struct City {
-    int id;
-    string name;
-    int injuredCount = 0;
-    bool isFlooded = false;
-    bool hasReceivedAid = false;
-    int priorityScore = 0;
-
-    int minDistance = INT_MAX;
-    int previousCityID = -1;
-};
-
-// Comparator for Priority Queue
-struct ComparePriority {
-    bool operator()(City const& p1, City const& p2) {
-        return p1.injuredCount < p2.injuredCount;
-    }
-};
-
-// ==========================================
-// MAIN SYSTEM CLASS
-// ==========================================
 class FloodReliefSystem {
-private:
+public:
+    // --- DATA STRUCTURES ---
 
-    // 🔥 HASHMAP instead of map
+    // 1. Database (Ahmed)
+    // REPLACED: std::map (BST) with std::unordered_map (Hash Table)
+    // Complexity: O(1) Average Case for Lookup
     unordered_map<int, City> cityDatabase;
 
-    // Graph: still okay as unordered_map (Used by ADIL)
-    unordered_map<int, vector<pair<int,int>>> roadNetwork;
+    // 2. Graph (Adil)
+    // RoadNetwork[CityID] -> List of {NeighborID, Distance}
+    // REPLACED: std::map with std::unordered_map
+    unordered_map<int, vector<pair<int, int>>> roadNetwork;
 
-    priority_queue<City, vector<City>, ComparePriority> emergencyQueue;
+    // 3. Emergency Queue (Ehsaan) -> USING YOUR CUSTOM CLASS
+    PriorityQueueSystem emergencyQueue;
 
-    stack<string> stockIslamabad;
-    stack<string> stockLahore;
+    // 4. Warehouses (Ehsaan) -> USING YOUR CUSTOM CLASS
+    InventorySystem stockIslamabad;
+    InventorySystem stockLahore;
 
-public:
-    FloodReliefSystem() {
-        loadCities();
-        loadRoads();
-        loadStock();
-    }
+    // --- CONSTRUCTOR ---
+    FloodReliefSystem();
 
-    // --- AHMED ---
+    // --- FUNCTION PROTOTYPES ---
+
+    // Ahmed's Functions (Data)
     void loadCities();
     void updateCityStatus(int id);
     void evaporateFlood();
     City getCity(int id);
 
-    // --- EHSAAN ---
+    // Ehsaan's Functions (Events)
     void loadStock();
     void simulateFloodSpread(int startCityID);
+
+    // Check if supplies exist (bool is safer/cleaner than string comparison)
     bool hasSupplies(string warehouse);
     void dispatchSupply(string warehouse);
 
-    // --- ADIL ---
+    // Adil's Functions (Pathfinding)
     void loadRoads();
     void runDijkstra(int startID);
     void visualizePath(int startID, int endID);
-
     void processNextEmergency();
 };
 

@@ -1,0 +1,19 @@
+# --- Visual Studio & System ---
+.vs/
+out/
+.DS_Store
+
+# --- C++ Build Files (Clean up your view) ---
+cmake-build-debug/
+*.exe
+*.pdb
+*.ilk
+*.obj
+
+# --- JetBrains / CLion (From your existing file) ---
+.idea/
+/shelf/
+/workspace.xml
+/httpRequests/
+/dataSources/
+/dataSources.local.xml
