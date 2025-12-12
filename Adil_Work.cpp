@@ -17,6 +17,11 @@ struct Edge {
     int weight; //distance in km
 };
 
+//helper function for Dijkstra Algo
+const int FLOOD_PENALTY = 10000; // High cost to force finding a different route
+const int ID_RAWALPINDI_HUB = 170; // North Hub (Islamabad/Rwp)
+const int ID_LAHORE_HUB = 121;     // Central Hub
+
 // Helper to make adding roads easier/cleaner
 void addRoad(unordered_map<int, vector<pair<int, int>>>& network, int u, int v, int dist) {
     network[u].push_back({v, dist});
@@ -121,131 +126,244 @@ void FloodReliefSystem::loadRoads() {
     // ==========================================
     // DEBUG: PRINT SAMPLE CONNECTIONS
     // ==========================================
-    cout << "\n=== [Adil] VERIFYING MAJOR CONNECTIONS ===\n";
-    vector<int> testHubs = {121, 170, 50, 142}; // Check Lahore, Rwp, Fsd, Multan
+    // cout << "\n=== [Adil] VERIFYING MAJOR CONNECTIONS ===\n";
+    // vector<int> testHubs = {121, 170, 50, 142}; // Check Lahore, Rwp, Fsd, Multan
     
-    for (int hubID : testHubs) {
-        string hubName = cityDatabase[hubID].name;
-        cout << "Hub: " << hubName << " (" << hubID << ") connects to: " << endl;
+    // for (int hubID : testHubs) {
+    //     string hubName = cityDatabase[hubID].name;
+    //     cout << "Hub: " << hubName << " (" << hubID << ") connects to: " << endl;
         
-        for (auto const& edge : roadNetwork[hubID]) {
-             // Basic bounds check to prevent crash if ID is invalid
-            if (cityDatabase.find(edge.first) != cityDatabase.end()) {
-                cout << "   -> " << cityDatabase[edge.first].name << " (" << edge.second << " km)" << endl;
-            }
-        }
-        cout << "-----------------------" << endl;
-    }
+    //     for (auto const& edge : roadNetwork[hubID]) {
+    //          // Basic bounds check to prevent crash if ID is invalid
+    //         if (cityDatabase.find(edge.first) != cityDatabase.end()) {
+    //             cout << "   -> " << cityDatabase[edge.first].name << " (" << edge.second << " km)" << endl;
+    //         }
+    //     }
+    //     cout << "-----------------------" << endl;
+    // }
 }
 
 
-//helper function for Dijkstra Algo
-const int FLOOD_AVOIDANCE_PENALTY = 10000; // High cost to force finding a different route
-const int HUB_ISLAMABAD_ID = 1;
-const int HUB_LAHORE_ID = 2;
 
-int calculateTravelCost(int startID, int targetCityID, unordered_map<int, vector<pair<int, int>>>& globalRoadNetwork, unordered_map<int, City>& globalCityData) {
+// int calculateTravelCost(int startID, int targetCityID, unordered_map<int, vector<pair<int, int>>>& globalRoadNetwork, unordered_map<int, City>& globalCityData) {
     
-    // Min-Heap to store <accumulatedDistance, cityID>
-    // Ordered by smallest distance first
-    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> travelQueue;
+//     // Min-Heap to store <accumulatedDistance, cityID>
+//     // Ordered by smallest distance first
+//     priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> travelQueue;
     
-    // Local map to track distances during this calculation only
-    unordered_map<int, int> tempDistances;
+//     // Local map to track distances during this calculation only
+//     unordered_map<int, int> tempDistances;
 
-    // Initialize all distances to Infinity
-    for (auto& city : globalCityData) {
-        int id = city.first; 
-        tempDistances[id] = INT_MAX;
-    }
+//     // Initialize all distances to Infinity
+//     for (auto& city : globalCityData) {
+//         int id = city.first; 
+//         tempDistances[id] = INT_MAX;
+//     }
 
-    // Set start point
-    tempDistances[startID] = 0;
-    travelQueue.push({0, startID});
+//     // Set start point
+//     tempDistances[startID] = 0;
+//     travelQueue.push({0, startID});
 
-    while (!travelQueue.empty()) {
-        int currentDist = travelQueue.top().first;
-        int currentCityID = travelQueue.top().second;
-        travelQueue.pop();
+//     while (!travelQueue.empty()) {
+//         int currentDist = travelQueue.top().first;
+//         int currentCityID = travelQueue.top().second;
+//         travelQueue.pop();
 
-        //If we found a shorter way to this city before, skip this outdated entry
-        if (currentDist > tempDistances[currentCityID]) continue;
+//         //If we found a shorter way to this city before, skip this outdated entry
+//         if (currentDist > tempDistances[currentCityID]) continue;
 
-        //Stop if we reached the target
-        if (currentCityID == targetCityID) return currentDist;
+//         //Stop if we reached the target
+//         if (currentCityID == targetCityID) return currentDist;
 
-        // Check all roads connected to the current city
-        for (auto& roadEdge : globalRoadNetwork[currentCityID]) {
-            int neighborCityID = roadEdge.first;
-            int roadLength = roadEdge.second;
+//         // Check all roads connected to the current city
+//         for (auto& roadEdge : globalRoadNetwork[currentCityID]) {
+//             int neighborCityID = roadEdge.first;
+//             int roadLength = roadEdge.second;
 
-            // CHECK FOR FLOODS
-            // If the neighbor city is flooded, pretend the road is 10,000km longer.
-            // This forces the algorithm to look for a dry route around it.
-            if (globalCityData[neighborCityID].isFlooded) {
-                roadLength += FLOOD_AVOIDANCE_PENALTY;
-            }
+//             // CHECK FOR FLOODS
+//             // If the neighbor city is flooded, pretend the road is 10,000km longer.
+//             // This forces the algorithm to look for a dry route around it.
+//             if (globalCityData[neighborCityID].isFlooded) {
+//                 roadLength += FLOOD_PENALTY;
+//             }
 
-            // Relaxation Step: Is this new path shorter than the old known path?
-            if (tempDistances[currentCityID] != INT_MAX && 
-                tempDistances[currentCityID] + roadLength < tempDistances[neighborCityID]) {
+//             // Relaxation Step: Is this new path shorter than the old known path?
+//             if (tempDistances[currentCityID] != INT_MAX && 
+//                 tempDistances[currentCityID] + roadLength < tempDistances[neighborCityID]) {
                 
-                tempDistances[neighborCityID] = tempDistances[currentCityID] + roadLength;
-                travelQueue.push({tempDistances[neighborCityID], neighborCityID});
-            }
-        }
-    }
+//                 tempDistances[neighborCityID] = tempDistances[currentCityID] + roadLength;
+//                 travelQueue.push({tempDistances[neighborCityID], neighborCityID});
+//             }
+//         }
+//     }
     
-    // If loop finishes and we never reached target
-    return INT_MAX;
-}
+//     // If loop finishes and we never reached target
+//     return INT_MAX;
+// }
 
+// ==========================================
+// DIJKSTRA'S ALGORITHM
+// ==========================================
 void FloodReliefSystem::runDijkstra(int startID) {
+    // Priority queue for Dijkstra: stores <distance, cityID>, ordered by smallest distance
     priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> visitQueue;
 
-    // Reset all cities
+    // RESET STATE
+    // We must reset distances every time we run this, because the "Flood" status
+    // of cities changes dynamically (Ehsaan's part), changing the optimal paths.
     for (auto& pair : cityDatabase) {
         pair.second.minDistance = INT_MAX;
         pair.second.previousCityID = -1;
     }
 
-    if (cityDatabase.find(startID) == cityDatabase.end()) { // Safety check
-        return; 
+    // Safety check
+    if (cityDatabase.find(startID) == cityDatabase.end()) {
+        return;
     }
-    
-    //Initialize Start Node
+
+    // INITIALIZE START NDOE
     cityDatabase[startID].minDistance = 0;
     visitQueue.push({0, startID});
 
-    //Processing Loop
+    // PROCESSING LOOP
     while (!visitQueue.empty()) {
-        int currentCityID = visitQueue.top().second;
-        int distToCurrent = visitQueue.top().first;
+        int currentID = visitQueue.top().second;
+        int currentDist = visitQueue.top().first;
         visitQueue.pop();
 
-        if (distToCurrent > cityDatabase[currentCityID].minDistance) {
-            continue;
-        }
+        // If we found a shorter path to this node already, skip
+        if (currentDist > cityDatabase[currentID].minDistance) continue;
 
         // Explore Neighbors
-        for (auto& road : roadNetwork[currentCityID]) {
-            int neighborID = road.first;
-            int roadDist = road.second;
+        for (auto& edge : roadNetwork[currentID]) {
+            int neighborID = edge.first;
+            int roadWeight = edge.second;
 
-            // Apply Flood Penalty
+            // FLOOD AVOIDANCE LOGIC
+            // If the neighbor is flooded, a massive penalty is added to the road weight.
+            // This makes the algorithm treat it as "effectively blocked" unless it's the ONLY way.
             if (cityDatabase[neighborID].isFlooded) {
-                roadDist += FLOOD_AVOIDANCE_PENALTY;
+                roadWeight += FLOOD_PENALTY;
             }
 
-            // Update if a better path is found
-            if (cityDatabase[currentCityID].minDistance != INT_MAX && 
-                cityDatabase[currentCityID].minDistance + roadDist < cityDatabase[neighborID].minDistance) {
+            // Relaxation Step
+            if (cityDatabase[currentID].minDistance != INT_MAX && 
+                cityDatabase[currentID].minDistance + roadWeight < cityDatabase[neighborID].minDistance) {
                 
-                cityDatabase[neighborID].minDistance = cityDatabase[currentCityID].minDistance + roadDist;
-                cityDatabase[neighborID].previousCityID = currentCityID; // Track where we came from
+                cityDatabase[neighborID].minDistance = cityDatabase[currentID].minDistance + roadWeight;
+                cityDatabase[neighborID].previousCityID = currentID; // Track path
                 
                 visitQueue.push({cityDatabase[neighborID].minDistance, neighborID});
             }
         }
     }
+}
+
+// ==========================================
+// VISUALIZE PATH (TRACE BACK)
+// ==========================================
+void FloodReliefSystem::visualizePath(int startID, int endID) {
+    if (cityDatabase[endID].minDistance == INT_MAX) {
+        cout << "[Path] No route available!" << endl;
+        return;
+    }
+
+    // Trace back from End to Start using previousCityID
+    vector<int> path;
+    int current = endID;
+    
+    while (current != -1) {
+        path.push_back(current);
+        
+        if (current == startID) {
+            break;
+        }
+        current = cityDatabase[current].previousCityID;
+    }
+    
+    // Flip to get Start -> End
+    reverse(path.begin(), path.end());
+
+    // Print visualization
+    cout << "[GPS] Route: ";
+    for (size_t i = 0; i < path.size(); i++) {
+        cout << cityDatabase[path[i]].name;
+        if (i < path.size() - 1) cout << " -> ";
+    }
+    cout << "\n[GPS] Total Distance: " << cityDatabase[endID].minDistance << " km" << endl;
+}
+
+// ==========================================
+// 4. THE DECISION ENGINE (PROCESS EMERGENCY)
+// ==========================================
+void FloodReliefSystem::processNextEmergency() {
+    // Empty CHECK
+    if (emergencyQueue.isEmpty()) return;
+
+    // Get the most critical city (Highest Priority)
+    City targetCity = emergencyQueue.dequeue();
+
+    // Validate (If already helped, skip)
+    if (cityDatabase[targetCity.id].hasReceivedAid) {
+        return; 
+    }
+
+    cout << "\n>>>Dispatching Relief to " << targetCity.name 
+         << " (Injured: " << targetCity.injuredCount << ")" << endl;
+
+    // Run Dijkstra Analysis
+    // We calculate distance from BOTH hubs to see who is closer.
+    
+    // From Rawalpindi (North Hub)
+    runDijkstra(ID_RAWALPINDI_HUB); 
+    int distFromRwp = cityDatabase[targetCity.id].minDistance;
+
+    // From Lahore (Central Hub)
+    runDijkstra(ID_LAHORE_HUB); 
+    int distFromLhr = cityDatabase[targetCity.id].minDistance;
+
+    // Decision Logic of which HUB Dispatches
+    string chosenHubName = "";
+    int chosenHubID = -1;
+
+    bool rwpHasStock = hasSupplies("Rawalpindi");
+    bool lhrHasStock = hasSupplies("Lahore");
+
+    // Choose closest IF it has stock. Else, choose the other one.
+    if (distFromRwp < distFromLhr) {
+        // Rawalpindi is closer
+        if (rwpHasStock) {
+            chosenHubName = "Rawalpindi";
+            chosenHubID = ID_RAWALPINDI_HUB;
+        } else if (lhrHasStock) {
+            cout << "[Alert] Rawalpindi is closer but EMPTY. Re-routing to Lahore." << endl;
+            chosenHubName = "Lahore";
+            chosenHubID = ID_LAHORE_HUB;
+        }
+    } else {
+        // Lahore is closer (or equal)
+        if (lhrHasStock) {
+            chosenHubName = "Lahore";
+            chosenHubID = ID_LAHORE_HUB;
+        } else if (rwpHasStock) {
+            cout << "[Alert] Lahore is closer but EMPTY. Re-routing to Rawalpindi." << endl;
+            chosenHubName = "Rawalpindi";
+            chosenHubID = ID_RAWALPINDI_HUB;
+        }
+    }
+
+    // Handle Total Failure (No stock anywhere)
+    if (chosenHubID == -1) {
+        cout << ">>> CRITICAL FAILURE: GLOBAL SUPPLY SHORTAGE! CANNOT DISPATCH." << endl;
+        return;
+    }
+
+    // Final Execution
+    // We must re-run Dijkstra for the WINNING hub to ensure
+    // the 'previousCityID' pointers are set correctly for the visualizePath function.
+    runDijkstra(chosenHubID);
+    
+    visualizePath(chosenHubID, targetCity.id);
+    dispatchSupply(chosenHubName);
+    updateCityStatus(targetCity.id); // Mark as helped
 }
