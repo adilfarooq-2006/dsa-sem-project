@@ -244,9 +244,9 @@ void FloodReliefSystem::runDijkstra(int startID) {
             // FLOOD AVOIDANCE LOGIC
             // If the neighbor is flooded, a massive penalty is added to the road weight.
             // This makes the algorithm treat it as "effectively blocked" unless it's the ONLY way.
-            if (cityDatabase[neighborID].isFlooded) {
-                roadWeight += FLOOD_PENALTY;
-            }
+            // if (cityDatabase[neighborID].isFlooded) {
+            //     roadWeight += FLOOD_PENALTY;
+            // }
 
             // Relaxation Step
             if (cityDatabase[currentID].minDistance != INT_MAX && 
