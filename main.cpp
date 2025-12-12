@@ -32,54 +32,49 @@ int main() {
         cout << "\n-------------------------------------------------\n";
         cout << "               MAIN CONTROL PANEL\n";
         cout << "-------------------------------------------------\n";
-        cout << "1. [SIMULATION] Start New Flood Wave (Uses BFS)\n";
+        cout << "1. [SIMULATION] Start New Flood Wave (BFS)\n";
         cout << "2. [MONITOR]    View Active Flood Status\n";
-        cout << "3. [ACTION]     Dispatch Aid to Critical Area (Uses Dijkstra + Heap)\n";
+        cout << "3. [ACTION]     Dispatch Aid (Dijkstra + Heap)\n";
         cout << "4. [INVENTORY]  Check Warehouse Stock Levels\n";
-        cout << "5. [LOGISTICS]  Manual Restock (Add Supplies)\n";
+        cout << "5. [LOGISTICS]  Manual Restock\n";
         cout << "0. Exit System\n";
         cout << "-------------------------------------------------\n";
         cout << "Select Option: ";
         cin >> choice;
 
-        // Input Validation (Prevents crash if user enters text)
+        // Input Validation
         if (cin.fail()) {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << ">>> Invalid input. Please enter a given number from menu.\n";
+            cout << ">>> Invalid input. Please enter a number.\n";
             continue;
         }
 
         switch (choice) {
         case 1: {
-            // Case 1: Triggers the BFS Algorithm
             int startNode;
             cout << "\n--- SELECT FLOOD ORIGIN ---\n";
-            cout << "Suggested IDs: 15 (Jhelum), 10 (DG Khan), 12 (Mianwali), 22 (Kasur)\n";
-            cout << "Enter City ID to start flood: ";
+            cout << "Suggested IDs: 15 (Bhera), 38 (DG Khan), 138 (Mianwali), 97 (Kasur)\n";
+            cout << "Enter City ID: ";
             cin >> startNode;
 
-            // Check if ID exists in the map
             if (sys.cityDatabase.find(startNode) != sys.cityDatabase.end()) {
                 sys.simulateFloodSpread(startNode);
-            }
-            else {
-                cout << ">>> [Error] Invalid City ID. Please check the list.\n";
+            } else {
+                cout << ">>> [Error] Invalid City ID.\n";
             }
             break;
         }
 
         case 2: {
-            // Case 2: Iterates through the HashMap to show status
             cout << "\n[CURRENT FLOOD STATUS REPORT]\n";
             bool anyFlooded = false;
             for (auto& entry : sys.cityDatabase) {
                 City& c = entry.second;
                 if (c.isFlooded) {
-                    cout << " - " << c.name
-                        << " | Injured: " << c.injuredCount
-                        << " | Priority Score: " << c.priorityScore;
-
+                    cout << " - " << c.name 
+                         << " | Injured: " << c.injuredCount 
+                         << " | Priority: " << c.priorityScore;
                     if (c.priorityScore > 500) cout << " [CRITICAL]";
                     cout << endl;
                     anyFlooded = true;
@@ -90,13 +85,11 @@ int main() {
         }
 
         case 3:
-            // Case 3: Triggers Priority Queue (Heap) & Shortest Path (Dijkstra)
-            // This is the most complex function in your project
+            // The Brain Function (Adil_Graph.cpp)
             sys.processNextEmergency();
             break;
 
         case 4:
-            // Case 4: Peeks inside the Stacks
             cout << "\n[WAREHOUSE: RAWALPINDI (North Hub)]\n";
             sys.stockRawalpindi.displayStock();
 
@@ -105,7 +98,6 @@ int main() {
             break;
 
         case 5:
-            // Case 5: Calls the manual restock function you added
             sys.manualRestock();
             break;
 

@@ -18,7 +18,7 @@ struct Edge {
 };
 
 //helper function for Dijkstra Algo
-const int FLOOD_PENALTY = 10000; // High cost to force finding a different route
+const int FLOOD_PENALTY = 999; // High cost to force finding a different route
 const int ID_RAWALPINDI_HUB = 170; // North Hub (Islamabad/Rwp)
 const int ID_LAHORE_HUB = 121;     // Central Hub
 
@@ -225,6 +225,8 @@ void FloodReliefSystem::runDijkstra(int startID) {
     cityDatabase[startID].minDistance = 0;
     visitQueue.push({0, startID});
 
+    cout << "   [Dijkstra] Calculating paths from " << cityDatabase[startID].name << "..." << endl;
+
     // PROCESSING LOOP
     while (!visitQueue.empty()) {
         int currentID = visitQueue.top().second;
@@ -254,6 +256,10 @@ void FloodReliefSystem::runDijkstra(int startID) {
                 cityDatabase[neighborID].previousCityID = currentID; // Track path
                 
                 visitQueue.push({cityDatabase[neighborID].minDistance, neighborID});
+
+                // cout << "\t-> Update: Route to " << cityDatabase[neighborID].name 
+                //      << " is now " << cityDatabase[neighborID].minDistance << "km via " 
+                //      << cityDatabase[currentID].name << endl;
             }
         }
     }
@@ -297,73 +303,80 @@ void FloodReliefSystem::visualizePath(int startID, int endID) {
 // 4. THE DECISION ENGINE (PROCESS EMERGENCY)
 // ==========================================
 void FloodReliefSystem::processNextEmergency() {
-    // Empty CHECK
-    if (emergencyQueue.isEmpty()) return;
-
-    // Get the most critical city (Highest Priority)
-    City targetCity = emergencyQueue.dequeue();
-
-    // Validate (If already helped, skip)
-    if (cityDatabase[targetCity.id].hasReceivedAid) {
-        return; 
-    }
-
-    cout << "\n>>>Dispatching Relief to " << targetCity.name 
-         << " (Injured: " << targetCity.injuredCount << ")" << endl;
-
-    // Run Dijkstra Analysis
-    // We calculate distance from BOTH hubs to see who is closer.
-    
-    // From Rawalpindi (North Hub)
-    runDijkstra(ID_RAWALPINDI_HUB); 
-    int distFromRwp = cityDatabase[targetCity.id].minDistance;
-
-    // From Lahore (Central Hub)
-    runDijkstra(ID_LAHORE_HUB); 
-    int distFromLhr = cityDatabase[targetCity.id].minDistance;
-
-    // Decision Logic of which HUB Dispatches
-    string chosenHubName = "";
-    int chosenHubID = -1;
-
-    bool rwpHasStock = hasSupplies("Rawalpindi");
-    bool lhrHasStock = hasSupplies("Lahore");
-
-    // Choose closest IF it has stock. Else, choose the other one.
-    if (distFromRwp < distFromLhr) {
-        // Rawalpindi is closer
-        if (rwpHasStock) {
-            chosenHubName = "Rawalpindi";
-            chosenHubID = ID_RAWALPINDI_HUB;
-        } else if (lhrHasStock) {
-            cout << "[Alert] Rawalpindi is closer but EMPTY. Re-routing to Lahore." << endl;
-            chosenHubName = "Lahore";
-            chosenHubID = ID_LAHORE_HUB;
-        }
-    } else {
-        // Lahore is closer (or equal)
-        if (lhrHasStock) {
-            chosenHubName = "Lahore";
-            chosenHubID = ID_LAHORE_HUB;
-        } else if (rwpHasStock) {
-            cout << "[Alert] Lahore is closer but EMPTY. Re-routing to Rawalpindi." << endl;
-            chosenHubName = "Rawalpindi";
-            chosenHubID = ID_RAWALPINDI_HUB;
-        }
-    }
-
-    // Handle Total Failure (No stock anywhere)
-    if (chosenHubID == -1) {
-        cout << ">>> CRITICAL FAILURE: GLOBAL SUPPLY SHORTAGE! CANNOT DISPATCH." << endl;
+   if (emergencyQueue.isEmpty()) {
+        cout << "\n[Status] No active emergencies reported." << endl;
         return;
     }
 
-    // Final Execution
-    // We must re-run Dijkstra for the WINNING hub to ensure
-    // the 'previousCityID' pointers are set correctly for the visualizePath function.
-    runDijkstra(chosenHubID);
-    
-    visualizePath(chosenHubID, targetCity.id);
-    dispatchSupply(chosenHubName);
-    updateCityStatus(targetCity.id); // Mark as helped
+    cout << "\n========================================================" << endl;
+    cout << " >>> STARTING MASS RELIEF OPERATION " << endl;
+    cout << "========================================================" << endl;
+
+    // LOOP: Keep running until Priority Queue is empty
+    while (!emergencyQueue.isEmpty()) {
+
+        // Get Next Victim
+        City targetCity = emergencyQueue.dequeue();
+
+        // Skip if already helped
+        if (cityDatabase[targetCity.id].hasReceivedAid) {
+            continue; 
+        }
+
+        cout << "\n--------------------------------------------------------" << endl;
+        cout << " [MISSION] Target: " << targetCity.name 
+             << " | Priority Score: " << targetCity.priorityScore << endl;
+        cout << "--------------------------------------------------------" << endl;
+
+        // 3. Calculate Routes (Silent Run)
+        // We run Dijkstra twice just to get the distances for comparison
+        runDijkstra(ID_RAWALPINDI_HUB); 
+        int distFromRwp = cityDatabase[targetCity.id].minDistance;
+
+        runDijkstra(ID_LAHORE_HUB); 
+        int distFromLhr = cityDatabase[targetCity.id].minDistance;
+
+        // 4. Make Decision
+        string chosenHubName = "";
+        int chosenHubID = -1;
+        bool rwpHasStock = hasSupplies("Rawalpindi");
+        bool lhrHasStock = hasSupplies("Lahore");
+
+        // Logic: Closest Available Hub
+        if (distFromRwp < distFromLhr) {
+            if (rwpHasStock) { chosenHubName = "Rawalpindi"; chosenHubID = ID_RAWALPINDI_HUB; }
+            else if (lhrHasStock) { chosenHubName = "Lahore"; chosenHubID = ID_LAHORE_HUB; }
+        } else {
+            if (lhrHasStock) { chosenHubName = "Lahore"; chosenHubID = ID_LAHORE_HUB; }
+            else if (rwpHasStock) { chosenHubName = "Rawalpindi"; chosenHubID = ID_RAWALPINDI_HUB; }
+        }
+
+        // 5. Handle Critical Failure (No Stock)
+        if (chosenHubID == -1) {
+            cout << ">>> CRITICAL: Supplies Exhausted! Ending Operation." << endl;
+            break; 
+        }
+
+        // 6. EXECUTE MISSION (The Visual Part)
+        cout << "   [Analysis] Distance from Rawalpindi: " << (distFromRwp >= 10000 ? "BLOCKED" : to_string(distFromRwp) + "km") << endl;
+        cout << "   [Analysis] Distance from Lahore:     " << (distFromLhr >= 10000 ? "BLOCKED" : to_string(distFromLhr) + "km") << endl;
+        cout << "   [Decision] Dispatching from: " << chosenHubName << endl;
+
+        // CRITICAL: We MUST re-run Dijkstra for the WINNING hub now.
+        // This ensures the 'previousCityID' links point correctly from the Hub to the City.
+        cout << "   [Dijkstra] Calculating optimal route..." << endl;
+        runDijkstra(chosenHubID); 
+        
+        // 7. Visualize and Dispatch
+        visualizePath(chosenHubID, targetCity.id);
+        dispatchSupply(chosenHubName);
+        updateCityStatus(targetCity.id); 
+
+        // Pause slightly between cities for dramatic effect (Optional, requires <thread> or <windows.h>)
+        // _sleep(1000); 
+    }
+
+    cout << "\n========================================================" << endl;
+    cout << " >>> ALL ACCESSIBLE VICTIMS PROCESSED" << endl;
+    cout << "========================================================" << endl;
 }

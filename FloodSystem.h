@@ -16,6 +16,15 @@ using namespace std;
 
 class FloodReliefSystem {
 public:
+
+    // CONSTRUCTOR
+    FloodReliefSystem() {
+        // The Master Sequence:
+        loadCities();  // 1. Load the empty city shells (Ahmed)
+        loadRoads();   // 2. Connect them with roads (Adil)
+        loadStock();   // 3. Fill the warehouses (Ehsaan)
+    }
+
     // --- DATA STRUCTURES ---
     unordered_map<int, City> cityDatabase;
     unordered_map<int, vector<pair<int, int>>> roadNetwork;
@@ -23,9 +32,6 @@ public:
     PriorityQueueSystem emergencyQueue; // Your Custom Heap
     InventorySystem stockRawalpindi;     // Your Custom Stack
     InventorySystem stockLahore;        // Your Custom Stack
-
-    // --- CONSTRUCTOR ---
-    FloodReliefSystem();
 
     // --- AHMED'S WORK ---
     void loadCities();
